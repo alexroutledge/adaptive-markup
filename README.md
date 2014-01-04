@@ -12,7 +12,6 @@ It is therefore not sufficient to simply hide/show content using media queries a
 
 Use cases
 ----
-
 ##### Images
 
 One of the main use cases is to serve different images to different viewports on a responsive site. An example might be a product details on an ecommerce site where the developer only wants device specific images to be downloaded.
@@ -43,3 +42,12 @@ How does it work?
 * When the page loads and whenever the window is resized, the JS scans for any element with a media attribute.
 * If the element has a media query that is not currently active, the elements 'src' attribute is set to 'unset-src', thus preventing the asset from being downloaded.
 * When the page initially loads, the DOM is rewritten according to points 1 and 2 above before the browser's lookahead parser is initialized. This means the DOM can be rewritten before the browser has started to download any assets.
+
+If you have JS disabled, visually nothing will change. However, all assets regardless of their media attribute will be downloaded.
+
+Testing
+----
+
+* Go to http://dl.dropboxusercontent.com/u/8767938/fresca/html5/responsive/index.html
+* You will notice that even though there are 2 img and 2 script tags present on the page, only the device/viewport specific version is downloaded.
+* Resize the browser. You will notice that only the device/viewport specific version is downloaded.
