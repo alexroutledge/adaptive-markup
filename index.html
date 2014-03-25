@@ -1,56 +1,102 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<script>!function(a,b,c,d,e){function g(a,c,d,e){var f=b.getElementsByTagName("script")[0];a.src=e,a.id=c,a.setAttribute("class",d),f.parentNode.insertBefore(a,f)}a.Mobify={points:[+new Date]};var f=/((; )|#|&|^)mobify=(\d)/.exec(location.hash+"; "+b.cookie);if(f&&f[3]){if(!+f[3])return}else if(!c())return;b.write('<plaintext style="display:none">'),setTimeout(function(){var c=a.Mobify=a.Mobify||{};c.capturing=!0;var f=b.createElement("script"),h="mobify",i=function(){var c=new Date;c.setTime(c.getTime()+3e5),b.cookie="mobify=0; expires="+c.toGMTString()+"; path=/",a.location=a.location.href};f.onload=function(){if(e)if("string"==typeof e){var c=b.createElement("script");c.onerror=i,g(c,"main-executable",h,mainUrl)}else a.Mobify.mainExecutable=e.toString(),e()},f.onerror=i,g(f,"mobify-js",h,d)})}(window,document,function(){a=/webkit|(firefox)[\/\s](\d+)|(opera)[\s\S]*version[\/\s](\d+)|(trident)[\/\s](\d+)|3ds/i.exec(navigator.userAgent);return!a||a[1]&&4>+a[2]||a[3]&&11>+a[4]||a[5]&&6>+a[6]?!1:!0},
-"js/mobify.js",
+    <script>
+            // First we'd need to create some global variable to take our mobify callback
+            var btf = {
+                mobify: {}
+            };
+            // Then we create our callback
+            btf.mobify.fixDom = function (elements, prefix) {
+                var i,
+                    el,
+                    matchQuery,
+                    match,
+                    src,
+                    set;
 
-function() {
-    var capturing = window.Mobify && window.Mobify.capturing || false;
-
-     function modifyDom(elements, prefix) {
-        for (var i=0; i<elements.length; i++) {
-            var el = elements[i];
-            var mediaQuery = el.getAttribute("media");
-            var match = window.matchMedia(mediaQuery).matches;
-            var src = (prefix || "") + "src";
-            if (el.tagName === "IMG" || el.tagName === "SCRIPT") {
-                if (match) {
-                    var set = src, unset = "unset-src";
-                } else {
-                    var set = "unset-src", unset = src;
+                for (i=0; i<elements.length; i++) {
+                    el = elements[i];
+                    mediaQuery = el.getAttribute("media");
+                    //mediaQuery = btf.mobify.media[mediaQuery];
+                    match = window.matchMedia(mediaQuery).matches;
+                    src = (prefix || "") + "src";
+                    if (el.tagName === "IMG" || el.tagName === "SCRIPT") {
+                        if (match) {
+                            set = src, unset = "unset-src";
+                        } else {
+                            set = "unset-src", unset = src;
+                        }
+                        if (el.hasAttribute(unset)) {
+                            el.setAttribute(set, el.getAttribute(unset));
+                            el.removeAttribute(unset);
+                        }
+                    }
                 }
-                if (el.hasAttribute(unset)) {
-                    el.setAttribute(set, el.getAttribute(unset));
-                    el.removeAttribute(unset);
-                }            }
-        }
-    }
+            };
+            // Now the mobify script that uses our callback
+            !function(a,b,c,d,e){function g(a,c,d,e){var f=b.getElementsByTagName("script")[0];a.src=e,a.id=c,a.setAttribute("class",d),f.parentNode.insertBefore(a,f)}a.Mobify={points:[+new Date]};var f=/((; )|#|&|^)mobify=(\d)/.exec(location.hash+"; "+b.cookie);if(f&&f[3]){if(!+f[3])return}else if(!c())return;b.write('<plaintext style="display:none">'),setTimeout(function(){var c=a.Mobify=a.Mobify||{};c.capturing=!0;var f=b.createElement("script"),h="mobify",i=function(){var c=new Date;c.setTime(c.getTime()+3e5),b.cookie="mobify=0; expires="+c.toGMTString()+"; path=/",a.location=a.location.href};f.onload=function(){if(e)if("string"==typeof e){var c=b.createElement("script");c.onerror=i,g(c,"main-executable",h,mainUrl)}else a.Mobify.mainExecutable=e.toString(),e()},f.onerror=i,g(f,"mobify-js",h,d)})}(window,document,function(){a=/webkit|(firefox)[\/\s](\d+)|(opera)[\s\S]*version[\/\s](\d+)|(trident)[\/\s](\d+)|3ds/i.exec(navigator.userAgent);return!a||a[1]&&4>+a[2]||a[3]&&11>+a[4]||a[5]&&6>+a[6]?!1:!0},
 
-    if (capturing) {
-        Mobify.Capture.init(function(capture){
-            var capturedDoc = capture.capturedDoc;
-            var mediaElements = capturedDoc.querySelectorAll("[media]");
-            modifyDom(mediaElements, capture.prefix);
-            capture.renderCapturedDoc();
-        });
-    }
-});
-</script>
+            // path to mobify.js
+            "//cdn.mobify.com/mobifyjs/build/mobify.js",
+
+            // calls to APIs go here (or path to a main.js)
+            function() {
+                var capturing = window.Mobify && window.Mobify.capturing || false;
+
+                function modifyDom(elements, prefix) {
+                    btf.mobify.fixDom(elements, prefix);
+                }
+
+                if (capturing) {
+                    console.log("Executing main during capturing phase!")
+
+                    // Grab reference to a newly created document
+                    Mobify.Capture.init(function(capture){
+                        var capturedDoc = capture.capturedDoc;
+
+                        // Grab all element with the media attribute and remove them if their media
+                        // query does not match
+                        var mediaElements = capturedDoc.querySelectorAll("[media]");
+                        modifyDom(mediaElements, capture.prefix);
+                        
+                        // Render source DOM to document
+                        capture.renderCapturedDoc();
+                    });
+
+                } else {
+                    console.log("Executing main in post-capturing phase!");
+                    var mediaElements = document.querySelectorAll("[media]");
+                    window.onresize = function() {
+                        modifyDom(mediaElements);            
+                    }
+                }
+
+            });</script>
 <title>Responsive content/images</title>
 <link href="css/main.css" rel="stylesheet"/>
 </head>
 <body>
-<div class="mobile">
+<div class="mobile" media="mobile">
     <p>Mobile content</p>
-    <img src="http://placehold.it/320x213" width="100%" media="(max-width : 480px)">
+    <img src="http://placehold.it/320x213" width="100%" media="(max-width: 480px)"/>
 </div>
-<div class="desktop">
+<div class="desktop" media="desktop">
     <p>Desktop content</p>
-    <img src="http://placehold.it/1280x853" width="100%" media="(min-width : 480px)">
+    <img src="http://placehold.it/1280x853" width="100%" media="(min-width: 900px)"/>
 </div>
+<script src="js/mobile.js" media="(max-width: 480px)"></script>
+<script src="js/desktop.js" media="(min-width: 900px)"></script>
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="js/main.js"></script>
-<script src="js/mobile.js" media="(max-width: 480px)"></script>
-<script src="js/desktop.js" media="(min-width: 480px)"></script>
+<script>
+            (function () {
+                var mediaElements = document.querySelectorAll("[media]");
+                window.onresize = function() {
+                    btf.mobify.fixDom(mediaElements);            
+                };
+                btf.mobify.fixDom(mediaElements);  
+            }());
+        </script>
 </body>
 </html>
